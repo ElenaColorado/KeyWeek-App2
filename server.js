@@ -46,13 +46,32 @@ const server = http.createServer((req, res) => {
         try {
             const avatar = decodeURIComponent(pathname.substring(9));
             const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-            const misAportes = db.filter(a => a.participante === avatar);
-            const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
-            const interes = total > 0 ? total * 0.05 : 0;
-            const granTotal = total + interes;
+            const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
+
+            const totalAportesGlobal = db.filter(a => a.monto > 0).reduce((sum, a) => sum + a.monto, 0);
+            const totalPrestamosGlobal = Math.abs(db.filter(a => a.monto < 0).reduce((sum, a) => sum + a.monto, 0));
+            const dineroDisponible = totalAportesGlobal - totalPrestamosGlobal;
+            const gananciaGlobal = totalPrestamosGlobal * 0.10; // 10% interes
+            
+            const misAportes = db.filter(a => a.participante === avatar && a.monto > 0).reduce((sum, a) => sum + a.monto, 0);
+            const misRetiros = Math.abs(db.filter(a => a.participante === avatar && a.monto < 0).reduce((sum, a) => sum + a.monto, 0));
+            
+            const porcentaje = totalAportesGlobal > 0 ? (misAportes / totalAportesGlobal) : 0;
+            const interesGanado = porcentaje * gananciaGlobal;
+            const deuda = misRetiros > 0 ? misRetiros + (misRetiros * 0.10) : 0;
+
+            const balance = (misAportes + interesGanado) - deuda;
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ total, interes, granTotal, aportes: misAportes }));
+            res.end(JSON.stringify({ 
+                aportesNetos: misAportes, 
+                retirosNetos: misRetiros, 
+                deuda, 
+                interesGanado, 
+                balance, 
+                dineroDisponible,
+                historial: db.filter(a => a.participante === avatar) 
+            }));
         } catch(e) {
             res.writeHead(500); res.end();
         }
@@ -65,16 +84,29 @@ const server = http.createServer((req, res) => {
             const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
             const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
             
+            const totalAportesGlobal = db.filter(a => a.monto > 0).reduce((sum, a) => sum + a.monto, 0);
+            const totalPrestamosGlobal = Math.abs(db.filter(a => a.monto < 0).reduce((sum, a) => sum + a.monto, 0));
+            const dineroDisponible = totalAportesGlobal - totalPrestamosGlobal;
+            const gananciaGlobal = totalPrestamosGlobal * 0.10;
+
             const resumenUsuarios = Object.keys(carasDb).map(avatar => {
-                const misAportes = db.filter(a => a.participante === avatar);
-                const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
-                const interes = total > 0 ? total * 0.05 : 0;
-                const granTotal = total + interes;
-                return { avatar, total, interes, granTotal, isEncargado: carasDb[avatar].isEncargado };
+                const tr = db.filter(a => a.participante === avatar);
+                const aportes = tr.filter(a => a.monto > 0).reduce((sum, a) => sum + a.monto, 0);
+                const retiros = Math.abs(tr.filter(a => a.monto < 0).reduce((sum, a) => sum + a.monto, 0));
+                
+                const porcentaje = totalAportesGlobal > 0 ? (aportes / totalAportesGlobal) : 0;
+                const interesGanado = porcentaje * gananciaGlobal;
+                const deuda = retiros > 0 ? retiros + (retiros * 0.10) : 0;
+                const balance = (aportes + interesGanado) - deuda;
+
+                return { avatar, aportes, retiros, deuda, interesGanado, balance, isEncargado: carasDb[avatar].isEncargado };
             });
             
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify(resumenUsuarios));
+            res.end(JSON.stringify({
+                globales: { dineroDisponible, gananciaGlobal, totalAportesGlobal, totalPrestamosGlobal },
+                usuarios: resumenUsuarios
+            }));
         } catch(e) {
             res.writeHead(500); res.end();
         }
