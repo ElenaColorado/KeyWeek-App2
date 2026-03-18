@@ -3,57 +3,120 @@ const fs = require('fs');
 const path = require('path');
 
 const DB_FILE = path.join(__dirname, 'base_de_datos.json');
+const CARAS_FILE = path.join(__dirname, 'caras.json');
+const HTML_FILE = path.join(__dirname, 'AhorrosAppMVP.html');
+
+if (!fs.existsSync(DB_FILE)) fs.writeFileSync(DB_FILE, '[]');
+if (!fs.existsSync(CARAS_FILE)) fs.writeFileSync(CARAS_FILE, '{}');
 
 const server = http.createServer((req, res) => {
-    // Configuración CORS para evitar bloqueos del navegador
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    if (req.method === 'OPTIONS') {
-        res.writeHead(204);
-        res.end();
-        return;
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
+
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const pathname = url.pathname;
+
+    if (pathname === '/' || pathname === '/AhorrosAppMVP.html') {
+        const html = fs.readFileSync(HTML_FILE, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(html); return;
     }
 
-    if (req.url === '/aportes' && req.method === 'GET') {
-        let data = '[]';
-        if (fs.existsSync(DB_FILE)) {
-            data = fs.readFileSync(DB_FILE, 'utf-8');
-        } else {
-            fs.writeFileSync(DB_FILE, '[]');
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(data);
-    } 
-    else if (req.url === '/aportes' && req.method === 'POST') {
+    if (pathname === '/aportes' && req.method === 'POST') {
         let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
+        req.on('data', chunk => body += chunk);
         req.on('end', () => {
             try {
-                const aportes = JSON.parse(body);
-                // Guardar en el archivo JSON con indentación para que sea fácil de leer
-                fs.writeFileSync(DB_FILE, JSON.stringify(aportes, null, 2));
+                const nuevoAporte = JSON.parse(body);
+                const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+                db.push(nuevoAporte);
+                fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: true }));
             } catch(e) {
-                res.writeHead(400, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: 'JSON inválido' }));
+                res.writeHead(400); res.end();
             }
-        });
-    } else {
-        res.writeHead(404);
-        res.end();
+        }); return;
     }
+
+    if (pathname.startsWith('/resumen/') && req.method === 'GET') {
+        try {
+            const avatar = decodeURIComponent(pathname.substring(9));
+            const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+            const misAportes = db.filter(a => a.participante === avatar);
+            const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
+            const interes = total * 0.05;
+            const granTotal = total + interes;
+
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ total, interes, granTotal, aportes: misAportes }));
+        } catch(e) {
+            res.writeHead(500); res.end();
+        }
+        return;
+    }
+
+    // LISTAR PERFILES PARA EL MENU
+    if (pathname === '/perfiles' && req.method === 'GET') {
+        try {
+            const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
+            const perfiles = Object.keys(carasDb).map(avatar => ({
+                avatar,
+                isEncargado: carasDb[avatar].isEncargado
+            }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(perfiles));
+        } catch(e) {
+            res.writeHead(500); res.end();
+        }
+        return;
+    }
+
+    // OBTENER CARA (PARA VALIDAR)
+    if (pathname.startsWith('/caras/') && req.method === 'GET') {
+        const avatar = decodeURIComponent(pathname.substring(7));
+        const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
+        if (carasDb[avatar]) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ descriptor: carasDb[avatar].descriptor }));
+        } else {
+            res.writeHead(404); res.end(JSON.stringify({ error: 'No registrada' }));
+        }
+        return;
+    }
+
+    // GUARDAR NUEVA CARA
+    if (pathname === '/caras' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', () => {
+            try {
+                const { avatar, descriptor } = JSON.parse(body);
+                const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
+                
+                // La primera cara registrada se vuelve Encargado automáticamente
+                const isEncargado = Object.keys(carasDb).length === 0;
+                
+                carasDb[avatar] = { descriptor, isEncargado };
+                fs.writeFileSync(CARAS_FILE, JSON.stringify(carasDb));
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, isEncargado }));
+            } catch(e) {
+                res.writeHead(400); res.end();
+            }
+        }); return;
+    }
+
+    res.writeHead(404); res.end();
 });
 
 const PORT = 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n==============================================`);
-    console.log(`✅ Servidor Node.js ejecutándose en http://localhost:${PORT}`);
-    console.log(`📁 Base de datos conectada: ${DB_FILE}`);
+    console.log(`✅ Servidor Node.js con Perfiles y Biometria Activo`);
     console.log(`==============================================`);
-    console.log(`Minimiza esta ventana blanca, pero NO la cierres.`);
 });
