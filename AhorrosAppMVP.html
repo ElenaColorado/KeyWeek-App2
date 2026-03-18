@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Caja de Ahorros MVP</title>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Deshabilitar selección de texto y zoom doble toque para que se sienta como App nativa */
+        body {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        /* Ocultar barra de scroll en historiales */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lista visual de participantes usando avatares de animales para quienes no saben leer
+        const AVATARES = ['🐶', '🐱', '🦊', '🐰', '🐯', '🐸', '🐼', '🦁', '🐮'];
+
+        function App() {
+            const [view, setView] = useState('tesorera'); // Vistas: 'tesorera' o 'participante'
+            const [aportes, setAportes] = useState([]);
+            
+            // --- Estado Tesorera ---
+            const [avatarSeleccionado, setAvatarSeleccionado] = useState(null);
+            const [monto, setMonto] = useState(0);
+            const [showSuccess, setShowSuccess] = useState(false);
+
+            // --- Estado Participante ---
+            const [miAvatar, setMiAvatar] = useState(null);
+
+            // Cargar datos persistentes
+            useEffect(() => {
+                const savedAportes = localStorage.getItem('aportesVisual');
+                if (savedAportes) {
+                    setAportes(JSON.parse(savedAportes));
+                }
+            }, []);
+
+            // Función para agregar dinero evitando errores de decimales en JS
+            const sumarDinero = (cantidad) => {
+                setMonto(prev => Math.round((prev + cantidad) * 100) / 100);
+            };
+
+            const guardarAporte = () => {
+                if (avatarSeleccionado && monto > 0) {
+                    const nuevoAporte = {
+                        id: Date.now(),
+                        participante: avatarSeleccionado,
+                        monto: monto
+                    };
+                    const nuevosAportes = [...aportes, nuevoAporte];
+                    
+                    setAportes(nuevosAportes);
+                    localStorage.setItem('aportesVisual', JSON.stringify(nuevosAportes));
+                    
+                    setMonto(0);
+                    setAvatarSeleccionado(null);
+                    
+                    // Mostrar pantalla verde de éxito gigante
+                    setShowSuccess(true);
+                    setTimeout(() => setShowSuccess(false), 2000);
+                }
+            };
+
+            // VISTA 1: TESORERA (Solo iconos, sin necesidad de leer)
+            const renderTesorera = () => {
+                const listoParaGuardar = avatarSeleccionado !== null && monto > 0;
+
+                return (
+                    <div className="bg-white p-4 rounded-3xl shadow-xl max-w-md mx-auto">
+                        
+                        {/* Selector de Avatar (Quién da el dinero) */}
+                        <div className="mb-6 bg-blue-50 p-4 rounded-3xl">
+                            <div className="text-center mb-3 text-4xl">👤 ❓</div>
+                            <div className="grid grid-cols-3 gap-3">
+                                {AVATARES.map(av => (
+                                    <button 
+                                        key={av} 
+                                        onClick={() => setAvatarSeleccionado(av)}
+                                        className={`text-5xl h-20 rounded-2xl transition-all flex items-center justify-center ${avatarSeleccionado === av ? 'bg-white scale-105 border-4 border-blue-500 shadow-md' : 'bg-transparent grayscale opacity-50'}`}
+                                    >
+                                        {av}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Sumador de Billetes y Monedas reales */}
+                        <div className="mb-6 bg-green-50 p-4 rounded-3xl relative">
+                            {/* Pantalla del total */}
+                            <div className="bg-white rounded-2xl p-4 mb-4 flex justify-between items-center border-4 border-green-200">
+                                <button onClick={() => setMonto(0)} className="text-3xl bg-red-100 p-3 rounded-full active:scale-95 shadow-sm">
+                                    🗑️
+                                </button>
+                                <span className="text-5xl font-black text-green-700">${monto.toFixed(2)}</span>
+                                <div className="w-10"></div> {/* Espaciador */}
+                            </div>
+
+                            {/* Billetes */}
+                            <div className="grid grid-cols-2 gap-3 w-full mb-6">
+                                <button onClick={() => sumarDinero(1)} className="bg-green-600 rounded-xl h-20 flex flex-col items-center justify-center shadow-[0_6px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none border-2 border-green-800">
+                                    <span className="text-4xl">💵 1</span>
+                                </button>
+                                <button onClick={() => sumarDinero(5)} className="bg-green-600 rounded-xl h-20 flex flex-col items-center justify-center shadow-[0_6px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none border-2 border-green-800">
+                                    <span className="text-4xl">💵 5</span>
+                                </button>
+                                <button onClick={() => sumarDinero(10)} className="bg-green-600 rounded-xl h-20 flex flex-col items-center justify-center shadow-[0_6px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none border-2 border-green-800">
+                                    <span className="text-4xl">💵 10</span>
+                                </button>
+                                <button onClick={() => sumarDinero(20)} className="bg-green-600 rounded-xl h-20 flex flex-col items-center justify-center shadow-[0_6px_0_rgb(21,128,61)] active:translate-y-1 active:shadow-none border-2 border-green-800">
+                                    <span className="text-4xl">💵 20</span>
+                                </button>
+                            </div>
+
+                            {/* Monedas proporcionadas visualmente (Quarter, Dime, Nickel, Penny) */}
+                            <div className="flex justify-around items-end h-24">
+                                {/* 25¢ - Quarter (Grande, Plateada) */}
+                                <button onClick={() => sumarDinero(0.25)} className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-400 shadow-[0_6px_0_rgb(156,163,175)] active:translate-y-1 active:shadow-none">
+                                    <span className="text-2xl font-bold text-gray-700">25</span>
+                                </button>
+                                {/* 10¢ - Dime (Pequeña, Plateada) */}
+                                <button onClick={() => sumarDinero(0.10)} className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-400 shadow-[0_4px_0_rgb(156,163,175)] active:translate-y-1 active:shadow-none mb-4">
+                                    <span className="text-sm font-bold text-gray-700">10</span>
+                                </button>
+                                {/* 5¢ - Nickel (Mediana, Plateada) */}
+                                <button onClick={() => sumarDinero(0.05)} className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center border-4 border-gray-400 shadow-[0_4px_0_rgb(156,163,175)] active:translate-y-1 active:shadow-none mb-2">
+                                    <span className="text-lg font-bold text-gray-700">5</span>
+                                </button>
+                                {/* 1¢ - Penny (Mediana-pequeña, Cobre/Marrón) */}
+                                <button onClick={() => sumarDinero(0.01)} className="w-14 h-14 bg-orange-700 rounded-full flex items-center justify-center border-4 border-orange-900 shadow-[0_4px_0_rgb(154,52,18)] active:translate-y-1 active:shadow-none mb-3">
+                                    <span className="text-sm font-bold text-orange-200">1</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Botón Gigante de Confirmación (Check) */}
+                        <button 
+                            onClick={guardarAporte}
+                            disabled={!listoParaGuardar}
+                            className={`w-full h-24 rounded-3xl flex items-center justify-center transition-all ${listoParaGuardar ? 'bg-blue-600 shadow-[0_8px_0_rgb(37,99,235)] active:translate-y-2 active:shadow-none' : 'bg-gray-200 grayscale opacity-50'}`}
+                        >
+                            <span className="text-6xl">✅</span>
+                        </button>
+                    </div>
+                );
+            };
+
+            // VISTA 2: PARTICIPANTE (Solo íconos y números grandes)
+            const renderParticipante = () => {
+                if (!miAvatar) {
+                    return (
+                        <div className="bg-white p-6 rounded-3xl shadow-xl max-w-md mx-auto text-center border-t-8 border-green-500">
+                            <div className="text-6xl mb-8">👁️ 👤 ❓</div>
+                            <div className="grid grid-cols-3 gap-6">
+                                {AVATARES.map(av => (
+                                    <button 
+                                        key={av} 
+                                        onClick={() => setMiAvatar(av)}
+                                        className="text-6xl bg-gray-50 aspect-square rounded-3xl hover:bg-gray-100 border-4 border-transparent active:scale-95 transition-transform flex items-center justify-center"
+                                    >
+                                        {av}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                }
+
+                const misAportes = aportes.filter(a => a.participante === miAvatar);
+                const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
+                const interes = total * 0.05; // 5% de crecimiento
+                const granTotal = total + interes;
+
+                return (
+                    <div className="bg-white p-4 rounded-3xl shadow-xl max-w-md mx-auto">
+                        {/* Cabecera: Quien soy y Boton de salir */}
+                        <div className="flex justify-between items-center mb-6">
+                            <button onClick={() => setMiAvatar(null)} className="text-5xl bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center active:scale-95">
+                                ⬅️
+                            </button>
+                            <div className="text-7xl bg-blue-100 p-2 rounded-full border-4 border-blue-400 shadow-md">
+                                {miAvatar}
+                            </div>
+                            <div className="w-16"></div> {/* Espaciador */}
+                        </div>
+
+                        {/* Resultados Visuales */}
+                        <div className="space-y-4">
+                            {/* Ahorrado */}
+                            <div className="bg-gray-100 p-5 rounded-3xl border-4 border-gray-200 flex items-center justify-between">
+                                <span className="text-6xl">💰</span>
+                                <span className="text-5xl font-black text-gray-800">${total.toFixed(2)}</span>
+                            </div>
+
+                            {/* Intereses Crecimiento */}
+                            <div className="bg-green-100 p-5 rounded-3xl border-4 border-green-300 flex items-center justify-between relative overflow-hidden">
+                                <span className="text-6xl z-10">📈</span>
+                                <div className="flex flex-col items-end z-10">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-3xl">➕</span>
+                                        <span className="text-4xl font-black text-green-700">${interes.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <div className="absolute opacity-20 text-8xl -right-2 -top-2">🚀</div>
+                            </div>
+
+                            {/* Gran Total */}
+                            <div className="bg-blue-600 p-6 rounded-3xl border-4 border-blue-800 flex items-center justify-between shadow-xl text-white mt-6">
+                                <span className="text-6xl">💎</span>
+                                <span className="text-5xl font-black">${granTotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        {/* Historial de Aportes */}
+                        <div className="mt-8">
+                            <div className="text-center text-5xl mb-4">📜</div>
+                            <div className="space-y-3 max-h-48 overflow-y-auto no-scrollbar pb-6 px-1">
+                                {misAportes.slice().reverse().map(a => (
+                                    <div key={a.id} className="bg-gray-50 p-4 rounded-2xl flex justify-between items-center border-2 border-gray-200 shadow-sm">
+                                        <span className="text-4xl">✅</span>
+                                        <span className="text-3xl font-black text-gray-700">${a.monto.toFixed(2)}</span>
+                                    </div>
+                                ))}
+                                {misAportes.length === 0 && (
+                                    <div className="text-center text-6xl text-gray-200 py-6">
+                                        🫙
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="container mx-auto p-4 max-w-lg relative">
+                    
+                    {/* Overlay de Éxito Gigante Animado */}
+                    {showSuccess && (
+                        <div className="fixed inset-0 bg-green-500 z-50 flex flex-col items-center justify-center animate-pulse">
+                            <div className="text-[180px] drop-shadow-2xl scale-150 transform transition-transform duration-500">👍</div>
+                            <div className="text-white text-3xl font-bold mt-10 tracking-widest">OK</div>
+                        </div>
+                    )}
+
+                    {/* Navegación por iconos gigantes */}
+                    <nav className="flex justify-center gap-6 mb-8 mt-4">
+                        {/* Boton ir a tesorera */}
+                        <button 
+                            onClick={() => setView('tesorera')}
+                            className={`w-28 h-28 rounded-3xl flex items-center justify-center text-6xl transition-all duration-300 ${view === 'tesorera' ? 'bg-blue-500 shadow-xl scale-110' : 'bg-gray-200 grayscale opacity-60'}`}
+                        >
+                            ✍️
+                        </button>
+                        
+                        {/* Boton ir a ver ahorros (Participante) */}
+                        <button 
+                            onClick={() => setView('participante')}
+                            className={`w-28 h-28 rounded-3xl flex items-center justify-center text-6xl transition-all duration-300 ${view === 'participante' ? 'bg-green-500 shadow-xl scale-110' : 'bg-gray-200 grayscale opacity-60'}`}
+                        >
+                            👁️
+                        </button>
+                    </nav>
+
+                    <main className="pb-10">
+                        {view === 'tesorera' ? renderTesorera() : renderParticipante()}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
