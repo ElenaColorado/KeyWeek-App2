@@ -48,11 +48,33 @@ const server = http.createServer((req, res) => {
             const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
             const misAportes = db.filter(a => a.participante === avatar);
             const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
-            const interes = total * 0.05;
+            const interes = total > 0 ? total * 0.05 : 0;
             const granTotal = total + interes;
 
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ total, interes, granTotal, aportes: misAportes }));
+        } catch(e) {
+            res.writeHead(500); res.end();
+        }
+        return;
+    }
+
+    // RESUMEN GLOBAL DE TODOS LOS USUARIOS
+    if (pathname === '/resumen-global' && req.method === 'GET') {
+        try {
+            const db = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+            const carasDb = JSON.parse(fs.readFileSync(CARAS_FILE, 'utf-8'));
+            
+            const resumenUsuarios = Object.keys(carasDb).map(avatar => {
+                const misAportes = db.filter(a => a.participante === avatar);
+                const total = misAportes.reduce((sum, a) => sum + a.monto, 0);
+                const interes = total > 0 ? total * 0.05 : 0;
+                const granTotal = total + interes;
+                return { avatar, total, interes, granTotal, isEncargado: carasDb[avatar].isEncargado };
+            });
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(resumenUsuarios));
         } catch(e) {
             res.writeHead(500); res.end();
         }
