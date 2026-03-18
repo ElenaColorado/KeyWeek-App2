@@ -50,12 +50,14 @@
             // --- Estado Participante ---
             const [miAvatar, setMiAvatar] = useState(null);
 
-            // Cargar datos persistentes
+            // Cargar datos persistentes desde el Node.js (Servidor Local)
             useEffect(() => {
-                const savedAportes = localStorage.getItem('aportesVisual');
-                if (savedAportes) {
-                    setAportes(JSON.parse(savedAportes));
-                }
+                fetch('http://localhost:3000/aportes')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (Array.isArray(data)) setAportes(data);
+                    })
+                    .catch(err => console.error("Error al cargar la base de datos:", err));
             }, []);
 
             // Función para agregar dinero evitando errores de decimales en JS
@@ -71,9 +73,14 @@
                         monto: monto
                     };
                     const nuevosAportes = [...aportes, nuevoAporte];
-                    
                     setAportes(nuevosAportes);
-                    localStorage.setItem('aportesVisual', JSON.stringify(nuevosAportes));
+                    
+                    // Guardar en el Archivo Local via Servidor Node
+                    fetch('http://localhost:3000/aportes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(nuevosAportes)
+                    }).catch(err => console.error("Error guardando:", err));
                     
                     setMonto(0);
                     setAvatarSeleccionado(null);
