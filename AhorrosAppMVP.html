@@ -24,6 +24,18 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
+
+        const Speaker = ({ text, styleClass = "ml-2 text-xl inline-block cursor-pointer" }) => {
+            const speak = (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'es-ES';
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(u);
+            };
+            return <span onClick={speak} className={`hover:scale-110 active:scale-95 transition-transform select-none ${styleClass}`} title="Escuchar texto" role="button">🔊</span>;
+        };
         const AVATARES = ['🐶', '🐱', '🦊', '🐰', '🐯', '🐸', '🐼', '🦁', '🐮', '🐷', '🐵', '🐔', '🐧', '🐻', '🐨'];
 
         // COMPONENTE ESCÁNER FACIAL REUTILIZABLE
@@ -108,7 +120,7 @@
 
             return (
                 <div className="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-4">
-                    <h3 className="text-blue-200 text-lg font-bold mb-2 tracking-widest uppercase">{headerTitle}</h3>
+                    <h3 className="text-blue-200 text-lg font-bold mb-2 tracking-widest uppercase">{headerTitle} <Speaker text={headerTitle} styleClass="ml-2" /></h3>
                     <div className="bg-blue-600 text-white text-2xl font-bold px-8 py-3 rounded-full shadow-2xl mb-6 flex items-center gap-3 max-w-sm text-center">
                         <span className="text-5xl">{isEncargadoAuth ? '💼' : avatar}</span>
                         <span>{msg}</span>
@@ -266,8 +278,8 @@
                 return (
                     <div className="fixed inset-0 bg-blue-600 flex flex-col items-center justify-center text-white p-6 text-center z-50">
                         <div className="text-9xl mb-8 animate-bounce">🤖</div>
-                        <h1 className="text-4xl font-black mb-4">Cargando Sistema Biométrico</h1>
-                        <p className="text-blue-200 text-xl font-bold max-w-xs">Esto toma unos segundos la primera vez.</p>
+                        <h1 className="text-4xl font-black mb-4">Cargando Sistema Biométrico <Speaker text="Cargando Sistema Biométrico"/></h1>
+                        <p className="text-blue-200 text-xl font-bold max-w-xs">Esto toma unos segundos la primera vez. <Speaker text="Esto toma unos segundos la primera vez."/></p>
                         <div className="mt-12 w-16 h-16 border-8 border-white border-t-transparent rounded-full animate-spin shadow-xl"></div>
                     </div>
                 );
@@ -277,8 +289,9 @@
                 return (
                     <div className="flex flex-col items-center min-h-screen py-10 px-4">
                         <div className="bg-white px-8 py-4 rounded-full shadow-md mb-12 border-b-4 border-blue-500 relative flex items-center gap-4">
-                            <h1 className="text-3xl font-black text-gray-800 tracking-wide">CAJA FUERTE</h1>
+                            <h1 className="text-3xl font-black text-gray-800 tracking-wide">CAJA FUERTE <Speaker text="Caja Fuerte"/></h1>
                             <button onClick={fetchGlobal} className="text-3xl bg-blue-50 p-2 rounded-full hover:bg-blue-100 transition-colors shadow-sm active:scale-95 border-2 border-blue-200" title="Ver Caja Global">📊</button>
+<Speaker text="Ver Caja Global" styleClass="ml-4 text-2xl inline-block cursor-pointer" />
                         </div>
                         
                         <div className="grid grid-cols-3 gap-6 max-w-md w-full">
@@ -309,7 +322,7 @@
                         {perfiles.length === 0 && (
                             <div className="mt-12 bg-blue-100 text-blue-800 p-6 rounded-3xl max-w-sm text-center font-bold shadow-sm">
                                 <p className="text-5xl mb-4">👋</p>
-                                <p>Toca el símbolo ➕ para crear el primer perfil. Al ser el primero, automáticamente serás el Encargado (💼).</p>
+                                <p>Toca el símbolo ➕ para crear el primer perfil. Al ser el primero, automáticamente serás el Encargado (💼). <Speaker text="Toca el símbolo más para crear el primer perfil. Al ser el primero, automáticamente serás el Encargado." /></p>
                             </div>
                         )}
                     </div>
@@ -340,24 +353,17 @@
                         {/* Tu Dinero */}
                         {/* Tu Dinero y Estado de Fondo Mutuo */}
                         <div className="space-y-3 animate-fade-in mb-8">
-                            {/* Saldo Final */}
-                            <div className="bg-gray-800 text-white p-4 justify-between items-center rounded-3xl flex shadow-lg border-4 border-gray-900">
-                                <span className="text-4xl">💰</span>
-                                <div className="text-right">
-                                    <span className="text-xs uppercase text-gray-400 font-bold block">Balance Real</span>
-                                    <span className="text-4xl font-black">${balance.toFixed(2)}</span>
-                                </div>
-                            </div>
+                            {/* Saldo Final Removido */}
 
                             <div className="grid grid-cols-2 gap-3">
                                 {/* Aportes */}
                                 <div className="bg-blue-50 p-4 rounded-3xl border-4 border-blue-200 flex flex-col items-center justify-center shadow-inner">
-                                    <span className="text-[10px] font-bold text-blue-800 uppercase mb-1">Mis Aportes 📥</span>
+                                    <span className="text-[10px] font-bold text-blue-800 uppercase mb-1">Mis Aportes 📥 <Speaker text="Mis Aportes" styleClass="ml-1 inline-block cursor-pointer"/></span>
                                     <span className="text-2xl font-black text-blue-900">${aportesNetos.toFixed(2)}</span>
                                 </div>
                                 {/* Intereses Ganados */}
                                 <div className="bg-green-50 p-4 rounded-3xl border-4 border-green-300 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
-                                    <span className="text-[10px] font-bold text-green-800 uppercase mb-1">Interés Ganado 📈</span>
+                                    <span className="text-[10px] font-bold text-green-800 uppercase mb-1">Interés Ganado 📈 <Speaker text="Interés Ganado" styleClass="ml-1 inline-block cursor-pointer"/></span>
                                     <span className="text-2xl font-black text-green-900">+${interesGanado.toFixed(2)}</span>
                                 </div>
                             </div>
@@ -367,7 +373,7 @@
                                 <div className="bg-red-50 p-4 rounded-3xl border-4 border-red-200 flex items-center justify-between shadow-inner">
                                     <span className="text-4xl">🧾</span>
                                     <div className="text-right text-red-700">
-                                        <span className="text-[10px] uppercase font-bold block tracking-wider">Tu Deuda (Préstamo + 10%)</span>
+                                        <span className="text-[10px] uppercase font-bold block tracking-wider">Tu Deuda (Préstamo + 10%) <Speaker text="Tu deuda, préstamo más el diez porciento" styleClass="ml-1 inline-block cursor-pointer"/></span>
                                         <span className="text-3xl font-black">-${deuda.toFixed(2)}</span>
                                     </div>
                                 </div>
@@ -378,15 +384,15 @@
                         {(encargado && encargado.avatar) === currentUser ? (
                             <div className="bg-blue-600 text-white p-8 rounded-3xl mb-8 text-center shadow-xl border-4 border-blue-800">
                                 <span className="text-[90px] block mb-6 animate-pulse">💼</span>
-                                <h3 className="font-black text-3xl mb-4">Eres el Encargado</h3>
-                                <p className="text-blue-100 font-medium text-xl leading-relaxed">Tu rol es autorizar y certificar con tu rostro cuando los demás participantes guarden su dinero.</p>
+                                <h3 className="font-black text-3xl mb-4">Eres el Encargado <Speaker text="Eres el Encargado"/></h3>
+                                <p className="text-blue-100 font-medium text-xl leading-relaxed">Tu rol es autorizar y certificar con tu rostro cuando los demás participantes guarden su dinero. <Speaker text="Tu rol es autorizar y certificar con tu rostro cuando los demás participantes guarden su dinero."/></p>
                             </div>
                         ) : (
                             <div className={`p-5 rounded-3xl border-2 mb-8 shadow-inner ${modoAporte === 'aportar' ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
                                 
                                 <div className="flex bg-white rounded-full p-2 mb-6 border-2 border-gray-200 shadow-sm relative">
-                                    <button onClick={() => {setModoAporte('aportar'); setMonto(0);}} className={`flex-1 py-3 text-xl font-bold rounded-full transition-all z-10 ${modoAporte==='aportar' ? 'text-white shadow-md' : 'text-gray-400'}`}>Aportar</button>
-                                    <button onClick={() => {setModoAporte('retirar'); setMonto(0);}} className={`flex-1 py-3 text-xl font-bold rounded-full transition-all z-10 ${modoAporte==='retirar' ? 'text-white shadow-md' : 'text-gray-400'}`}>Retirar</button>
+                                    <button onClick={() => {setModoAporte('aportar'); setMonto(0);}} className={`flex-1 py-3 text-xl font-bold rounded-full transition-all z-10 ${modoAporte==='aportar' ? 'text-white shadow-md' : 'text-gray-400'}`}>Aportar <Speaker text="Aportar" styleClass="ml-1"/></button>
+                                    <button onClick={() => {setModoAporte('retirar'); setMonto(0);}} className={`flex-1 py-3 text-xl font-bold rounded-full transition-all z-10 ${modoAporte==='retirar' ? 'text-white shadow-md' : 'text-gray-400'}`}>Retirar <Speaker text="Retirar" styleClass="ml-1"/></button>
                                     <div className={`absolute top-2 bottom-2 w-[calc(50%-8px)] rounded-full transition-all duration-300 ${modoAporte==='aportar' ? 'left-2 bg-green-500' : 'left-[calc(50%+4px)] bg-red-500'}`}></div>
                                 </div>
 
@@ -418,28 +424,14 @@
                                 >
                                     <span className="text-4xl font-bold">{modoAporte === 'aportar' ? '✅' : '💸'}</span>
                                     <div className="flex flex-col items-center">
-                                        <span className="text-sm font-bold uppercase opacity-80 mb-1">Certificar con:</span>
+                                        <span className="text-sm font-bold uppercase opacity-80 mb-1">Certificar con: <Speaker text="Certificar con"/></span>
                                         <span className="text-3xl bg-white/20 rounded-full px-4 py-1">{(encargado && encargado.avatar)} 💼</span>
                                     </div>
                                 </button>
                             </div>
                         )}
                         
-                        {/* HISTORIAL PERSONAL */}
-                        <div>
-                             <div className="text-center text-4xl mb-4">📜</div>
-                             <div className="space-y-3 max-h-40 overflow-y-auto no-scrollbar pb-6 px-1">
-                                 {historial.slice().reverse().map(a => (
-                                     <div key={a.id} className={`bg-gray-50 p-4 rounded-xl flex justify-between items-center border-2 ${a.monto > 0 ? 'border-green-200' : 'border-red-200'}`}>
-                                         <span className="text-3xl">{a.monto > 0 ? '📥' : '📤'}</span>
-                                         <span className={`text-2xl font-black ${a.monto > 0 ? 'text-green-700' : 'text-red-600'}`}>
-                                             {a.monto > 0 ? '+' : '-'}${Math.abs(a.monto).toFixed(2)}
-                                         </span>
-                                     </div>
-                                 ))}
-                                 {historial.length === 0 && <div className="text-center text-5xl opacity-50 py-4">🫙</div>}
-                             </div>
-                        </div>
+                        {/* HISTORIAL PERSONAL REMOVIDO */}
                     </div>
                 );
             };
@@ -453,33 +445,33 @@
                     <div className="bg-white p-4 rounded-3xl shadow-xl max-w-md mx-auto relative border-t-8 border-purple-500 mt-4 mb-10 w-full animate-fade-in">
                         <div className="flex items-center justify-between mb-6">
                             <button onClick={() => setView('menu')} className="text-4xl bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center shadow-sm active:scale-95">⬅️</button>
-                            <h2 className="text-xl font-black text-purple-800 tracking-wide">FONDO MUTUO</h2>
+                            <h2 className="text-xl font-black text-purple-800 tracking-wide">FONDO MUTUO <Speaker text="Fondo Mutuo"/></h2>
                             <div className="w-16"></div>
                         </div>
 
                         {/* ESTADISTICAS DEL FONDO */}
                         <div className="grid grid-cols-2 gap-3 mb-8">
                             <div className="bg-purple-100 col-span-2 flex flex-col items-center justify-center p-6 text-center rounded-3xl border-4 border-purple-200 shadow-inner">
-                                <p className="text-purple-600 font-bold uppercase tracking-widest mb-1 text-[10px]">Liquidez (Dinero Físico Real)</p>
+                                <p className="text-purple-600 font-bold uppercase tracking-widest mb-1 text-[10px]">Liquidez (Dinero Físico Real) <Speaker text="Liquidez, dinero físico real"/></p>
                                 <span className="text-6xl font-black text-purple-900">${dineroDisponible.toFixed(2)}</span>
                             </div>
                             
                             <div className="bg-blue-50 p-4 text-center rounded-2xl border-2 border-blue-200 flex flex-col justify-center">
-                                <span className="text-blue-500 text-[10px] font-bold uppercase mb-1">Aportes Base</span>
+                                <span className="text-blue-500 text-[10px] font-bold uppercase mb-1">Aportes Base <Speaker text="Aportes Base"/></span>
                                 <span className="text-blue-700 text-2xl font-black">${totalAportesGlobal.toFixed(2)}</span>
                             </div>
 
                             <div className="bg-red-50 p-4 text-center rounded-2xl border-2 border-red-200 flex flex-col justify-center">
-                                <span className="text-red-400 text-[10px] font-bold uppercase mb-1">Préstamos Emitidos</span>
+                                <span className="text-red-400 text-[10px] font-bold uppercase mb-1">Préstamos Emitidos <Speaker text="Préstamos Emitidos"/></span>
                                 <span className="text-red-700 text-2xl font-black">-${totalPrestamosGlobal.toFixed(2)}</span>
                             </div>
                         </div>
 
-                        <h3 className="text-center font-bold text-gray-400 uppercase tracking-widest mb-4 text-sm">Estado de Miembros</h3>
+                        <h3 className="text-center font-bold text-gray-400 uppercase tracking-widest mb-4 text-sm">Estado de Miembros <Speaker text="Estado de Miembros"/></h3>
                         
                         <div className="space-y-4 max-h-[45vh] overflow-y-auto no-scrollbar pb-6 px-1">
                             {usuarios.filter(u => (!u.isEncargado || u.balance > 0 || u.deuda > 0)).length === 0 && (
-                                <div className="text-center text-gray-400 py-10 font-bold">Nadie ha interactuado con el fondo 🫙</div>
+                                <div className="text-center text-gray-400 py-10 font-bold">Nadie ha interactuado con el fondo 🫙 <Speaker text="Nadie ha interactuado con el fondo"/></div>
                             )}
                             {usuarios.filter(u => (!u.isEncargado || u.balance > 0 || u.deuda > 0)).map(u => (
                                 <div key={u.avatar} className="bg-gray-50 p-4 rounded-2xl flex flex-col border-2 border-gray-200 shadow-sm relative overflow-hidden gap-3">
@@ -492,22 +484,22 @@
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[10px] uppercase font-bold text-gray-400">Balance final</p>
+                                            <p className="text-[10px] uppercase font-bold text-gray-400">Balance final <Speaker text="Balance final"/></p>
                                             <p className="text-3xl font-black text-gray-800">${u.balance.toFixed(2)}</p>
                                         </div>
                                     </div>
                                     
                                     <div className="flex justify-between items-end z-10 w-full text-xs font-bold uppercase tracking-wider px-2">
                                         <div className="flex flex-col gap-1 items-start">
-                                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]">Aporte: ${u.aportes.toFixed(2)}</span>
-                                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px]">+ Interés: ${u.interesGanado.toFixed(2)}</span>
+                                            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px]">Aporte: ${u.aportes.toFixed(2)} <Speaker text={`Aporte de ${u.aportes} dólares`} styleClass="ml-1"/></span>
+                                            <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px]">+ Interés: ${u.interesGanado.toFixed(2)} <Speaker text={`Interés de ${u.interesGanado} dólares`} styleClass="ml-1"/></span>
                                         </div>
                                         {u.deuda > 0 ? (
                                             <div className="flex flex-col gap-1 items-end">
-                                                <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-[10px] shadow-sm animate-pulse border border-red-200">Deuda: -${u.deuda.toFixed(2)}</span>
+                                                <span className="bg-red-100 text-red-600 px-2 py-1 rounded text-[10px] shadow-sm animate-pulse border border-red-200">Deuda: -${u.deuda.toFixed(2)} <Speaker text={`Deuda de ${u.deuda} dólares`} styleClass="ml-1"/></span>
                                             </div>
                                         ) : (
-                                            <span className="text-gray-300 text-[10px] pb-1">Sin Deudas ✅</span>
+                                            <span className="text-gray-300 text-[10px] pb-1">Sin Deudas ✅ <Speaker text="Sin Deudas" styleClass="ml-1"/></span>
                                         )}
                                     </div>
 
@@ -550,12 +542,12 @@
             ReactDOM.render(
                 <div className="min-h-screen bg-red-50 flex flex-col items-center justify-center p-6 text-center">
                     <div className="text-[120px] mb-6">⚠️</div>
-                    <h1 className="text-4xl font-black text-red-800 mb-4">No abras el archivo con doble clic</h1>
+                    <h1 className="text-4xl font-black text-red-800 mb-4">No abras el archivo con doble clic <Speaker text="No abras el archivo con doble clic"/></h1>
                     <p className="text-2xl text-red-700 font-medium max-w-lg mb-8">
                         Para que la base de datos y la inteligencia artificial funcionen de forma segura, debes acceder a través del servidor.
                     </p>
                     <div className="bg-white p-6 rounded-3xl shadow-xl border-4 border-red-200">
-                        <p className="text-lg text-gray-500 font-bold uppercase mb-2">Escribe esto en la barra de tu navegador:</p>
+                        <p className="text-lg text-gray-500 font-bold uppercase mb-2">Escribe esto en la barra de tu navegador: <Speaker text="Escribe esto en la barra de tu navegador"/></p>
                         <p className="text-blue-600 text-5xl font-black">localhost:3000</p>
                     </div>
                 </div>, 
